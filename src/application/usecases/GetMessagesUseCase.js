@@ -1,9 +1,11 @@
 class GetMessagesUseCase {
-    constructor(messageRepository){
+    constructor(messageRepository) {
         this.messageRepository = messageRepository;
     }
 
-    async execute({roomId, since}){
-        return await this.messageRepository.findByRoom(roomId,since);
+    async execute({ roomId, since, userId }) {
+        return await this.messageRepository.findByRoom({roomId, since, userId});
     }
 }
+
+module.exports = GetMessagesUseCase;

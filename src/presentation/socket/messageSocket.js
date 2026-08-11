@@ -1,12 +1,21 @@
-function registerMessageSocketHandlers(io, socket, sendMessageUseCase, onlineUsers){
-    socket.on("room:join", ({ roomId, userId }) =>{
-        socket.join(roomId);
-        onlineUsers.set(socket.id, userId);
-        console.log(`[socket] ${userId} joined room ${roomId}`);
-        socket.io(roomId).emit("user:online", {userId});
+function registerMessageSocketHandlers(io, socket, roomrepository, sendMessageUseCase, onlineUsers){
+    socket.on("room:join", async ({ roomId, userId }) =>{
+        try{
+            const isMember = await roomrepository.isMemberOfRoom(roomId, userId);
+            if(!isMember){
+                return socket.emit("error", {message: "Bạn không có quyền vào phòng này!"});
+            }
+
+            socket.join(roomId);
+            onlineUsers.set(socket.id, userId);
+            console.log(`[socket] ${userId} joined room ${roomId}`);
+            socket.to(roomId).emit("user:online", {userId});
+        }catch(error){
+
+        }
     });
 
-    socket.on("message:send", async ({ roomId, senderId, content, content, clientMessageId })=>{
+    socket.on("message:send", async ({ roomId, senderId, content, clientMessageId })=>{
         try{
             await sendMessageUseCase.execute({
                 clientMessageId,

@@ -6,7 +6,7 @@ class MessageRepository {
         throw new Error('insert() chưa được implement')
     }
 
-    async findByRoom(roomId, since = null, limit = 50){
+    async findByRoom({roomId, since = null, limit = 50, userId}){
         throw new Error('findByRoom() chưa được implement');
     }
 }
