@@ -1,4 +1,4 @@
-FROM node:20-slim AS builder
+FROM node:22-slim AS builder
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Stage 2: Production Runtime Image
-FROM node:20-slim AS runner
+FROM node:22-slim AS runner
 
 WORKDIR /app
 
