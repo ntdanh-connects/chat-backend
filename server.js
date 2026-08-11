@@ -33,9 +33,15 @@ app.use("/api/rooms", createRoomRouter(container.roomController));
 app.use("/api/users", createUserRouter(container.userController));
 app.use("/api/rooms", createMessageRouter(container.messageController));
 
-const onlineUsers = new Map();
 io.on("connection", (socket) => {
-  registerMessageSocketHandlers(io, socket, container.roomRepository, container.sendMessageUseCase, onlineUsers);
+  registerMessageSocketHandlers(
+    io,
+    socket,
+    container.roomRepository,
+    container.sendMessageUseCase,
+    container.updateLastSeenUseCase,
+    container.onlineUsers
+  );
 });
 
 const PORT = process.env.PORT ?? 3000;

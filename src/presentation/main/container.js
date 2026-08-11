@@ -4,6 +4,7 @@ const PostgresRoomRepository = require('../../infrastructure/repositories/Postgr
 const PostgreUserRepository = require('../../infrastructure/repositories/PostgreUserRepository.js');
 const SupabaseAuthRepository = require('../../infrastructure/services/auth/supabaseAuthRepository.js');
 const SocketIOBroadcaster = require('../../infrastructure/services/socket/SocketIOBroadcaster.js');
+const WebhookNotificationService = require('../../infrastructure/services/notification/WebhookNotificationService.js');
 
 const SendMessageUseCase = require('../../application/use_cases/SendMessageUseCase.js');
 const GetMessagesUseCase = require('../../application/use_cases/GetMessagesUseCase.js');
@@ -12,6 +13,7 @@ const LoginUseCase = require('../../application/use_cases/LoginUseCase.js');
 const GetOrCreateDirectRoomUseCase = require('../../application/use_cases/GetOrCreateDirectRoomUseCase.js');
 const GetSearchableUserUseCase = require('../../application/use_cases/GetSearchableUserUseCase.js');
 const GetUserRoomsUseCase = require('../../application/use_cases/GetUserRoomsUseCase.js');
+const UpdateLastSeenUseCase = require('../../application/use_cases/UpdateLastSeenUseCase.js');
 
 const AuthController = require('../controllers/AuthController.js');
 const RoomController = require('../controllers/RoomController.js');
@@ -19,6 +21,10 @@ const MessageController = require('../controllers/MessageController.js');
 const UserController = require('../controllers/UserController.js');
 
 function buildContainer(io) {
+    // 0. Shared State & External Services
+    const onlineUsers = new Map();
+    const notificationService = new WebhookNotificationService(process.env.WEBHOOK_URL);
+
     // 1. Infrastructure Implementations
     const messageRepository = new PostgresMessageRepository(pool);
     const socketBroadcaster = new SocketIOBroadcaster(io);
@@ -27,13 +33,14 @@ function buildContainer(io) {
     const userRepository = new PostgreUserRepository(pool);
 
     // 2. Use Cases
-    const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster);
+    const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notificationService, onlineUsers,roomRepository);
     const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
     const registerUseCase = new RegisterUseCase(authRepository);
     const loginUseCase = new LoginUseCase(authRepository);
     const getOrCreateDirectRoom = new GetOrCreateDirectRoomUseCase(roomRepository, authRepository);
     const getSearchableUserUseCase = new GetSearchableUserUseCase(userRepository);
-    const getUserRoomsUseCase = new GetUserRoomsUseCase(roomRepository);
+    const getUserRoomsUseCase = new GetUserRoomsUseCase(roomRepository, onlineUsers);
+    const updateLastSeenUseCase = new UpdateLastSeenUseCase(userRepository);
 
     // 3. Controllers
     const authController = new AuthController(registerUseCase, loginUseCase);
@@ -42,6 +49,8 @@ function buildContainer(io) {
     const userController = new UserController(getSearchableUserUseCase);
 
     return {
+        onlineUsers,
+        notificationService,
         messageRepository,
         socketBroadcaster,
         roomRepository,
@@ -54,6 +63,7 @@ function buildContainer(io) {
         getOrCreateDirectRoom,
         getSearchableUserUseCase,
         getUserRoomsUseCase,
+        updateLastSeenUseCase,
         authController,
         roomController,
         messageController,

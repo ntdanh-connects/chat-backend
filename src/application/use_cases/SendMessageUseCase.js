@@ -1,12 +1,15 @@
 const Message = require('../../domain/entities/Message.js');
 
 class SendMessageUseCase {
-    constructor(messageRepository, socketBroadcaster) {
+    constructor(messageRepository, socketBroadcaster, notificationService, onlineUsers,roomRepository) {
         this.messageRepository = messageRepository;
         this.socketBroadcaster = socketBroadcaster;
+        this.notificationService = notificationService;
+        this.onlineUsers = onlineUsers;
+        this.roomRepository = roomRepository;
     }
 
-    async execute({ clientMessageId, roomId, senderId, content, attachmentUrl}){
+    async execute({ clientMessageId, roomId, senderId, content, attachmentUrl, receiverId }){
         const message = new Message({
             clientMessageId,
             roomId,
@@ -19,6 +22,21 @@ class SendMessageUseCase {
 
         this.socketBroadcaster.broadcastToRoom(roomId, 'message:new', saveMessage);
 
+        if(this.roomRepository && this.notificationService){
+            const memberIds = await this.roomRepository.getRoomMemberIds(roomId);
+            const offlineUserIds = memberIds.filter(id => id !== senderId && !this.onlineUsers?.has(id));
+            if(offlineUserIds.length > 0){
+                await this.notificationService?.sendNotification({
+                    userIds: offlineUserIds,
+                    title: "Tin nhắn mới",
+                    body: content,
+                    data: {
+                        roomId,
+                        messageId : saveMessage.id
+                    }
+                })
+            }
+        }
         return saveMessage;
     }
 }

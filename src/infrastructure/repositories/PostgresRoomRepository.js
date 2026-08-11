@@ -106,7 +106,15 @@ class PostgresRoomRepository extends RoomRepository{
                 createdAt: row.last_msg_created_at
             } : null
         }));
+    }
 
+    async getRoomMemberIds(roomId){
+        const query = `
+            SELECT user_id FROM public.room_members WHERE room_id = $1
+        `;
+
+        const result = await this.pool.query(query,[roomId]);
+        return result.rows.map(row => row.user_id);
     }
 
     _toEntity(row){

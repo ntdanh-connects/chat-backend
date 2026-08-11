@@ -14,6 +14,10 @@ class RoomRepository{
     async getUserRooms(userId){
         throw new Error("getUserRooms() not yet Implement");
     }
+
+    async getRoomMemberIds(roomId){
+        throw new Error("getRoomMemberIds() not yet Implemet");
+    }
 }
 
 module.exports = RoomRepository;

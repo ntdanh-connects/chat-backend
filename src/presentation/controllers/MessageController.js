@@ -27,12 +27,14 @@ class MessageController {
         try {
             const { roomId } = req.params;
             const senderId = req.userId;
-            const { content, clientMessageId } = req.body;
+            const { content, clientMessageId, attachmentUrl, receiverId } = req.body;
             const message = await this.sendMessageUseCase.execute({
                 clientMessageId,
                 roomId,
                 senderId,
                 content,
+                attachmentUrl,
+                receiverId
             });
             res.status(201).json({
                 status: "success",

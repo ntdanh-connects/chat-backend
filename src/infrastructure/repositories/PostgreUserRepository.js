@@ -33,6 +33,14 @@ class PostgreUserRepository extends UserRepository{
         return result.rows.map((row)=> this._toEntity(row));
     }
 
+    async updateLastSeen(userId){
+        const query = `
+            UPDATE public.users SET last_seen_at = NOW() WHERE id = $1
+        `;
+
+        await this.pool.query(query,[userId]);
+    }
+
     _toEntity(row){
         if(!row) return null;
         return new User({
@@ -48,6 +56,7 @@ class PostgreUserRepository extends UserRepository{
             mustChangePassword: row.must_change_password,
             isActive: row.is_active,
             createdAt: row.created_at,
+            lastSeen: row.last_seen_at
         });
     }
 }

@@ -11,7 +11,9 @@ class User{
         roleLevel = 0,
         mustChangePassword = false,
         isActive = true,
-        createdAt
+        createdAt,
+        lastSeen,
+        isOnline,
     }){
         this.id = id,
         this.organizationId = organizationId,
@@ -24,7 +26,9 @@ class User{
         this.roleLevel = roleLevel,
         this.mustChangePassword = mustChangePassword,
         this.isActive = isActive,
-        this.createdAt = createdAt
+        this.createdAt = createdAt,
+        this.lastSeen = lastSeen,
+        this.isOnline = isOnline
     }
 }
 
