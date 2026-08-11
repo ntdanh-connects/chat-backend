@@ -1,6 +1,6 @@
 //Imple extend Interface in Repositoy
-const MessageReposity = require('../../../domain/repositories/MessageRepository.js');
-const Message = require('../../../domain/entities/Message.js');
+const MessageReposity = require('../../domain/interfaces/IMessageRepository.js');
+const Message = require('../../domain/entities/Message.js');
 
 
 class PostgreMessageRepository extends MessageReposity {

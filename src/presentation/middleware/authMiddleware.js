@@ -1,4 +1,4 @@
-const supabaseAdmin = require('../../infrastructure/auth/supabaseAdminClient.js');
+const supabaseAdmin = require('../../infrastructure/services/auth/supabaseAdminClient.js');
 
 async function authMiddleware(req, res, next) {
     try{

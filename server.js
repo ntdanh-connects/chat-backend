@@ -3,7 +3,7 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
-const buildContainer = require("./src/config/container.js");
+const buildContainer = require("./src/presentation/main/container.js");
 const createMessageRouter = require('./src/presentation/http/messageRouter.js');
 const registerMessageSocketHandlers = require("./src/presentation/socket/messageSocket.js");
 const createAuthRouter = require("./src/presentation/http/authRouter.js");
@@ -28,16 +28,14 @@ const io = new Server(server, {
 
 const container = buildContainer(io);
 
-app.use("/api/auth", createAuthRouter(container.registerUseCase, container.loginUseCase));
-app.use("/api/rooms", createRoomRouter(container.getOrCreateDirectRoom,container.getUserRoomsUseCase));
-app.use("/api/users", createUserRouter(container.getSearchableUserUseCase));
-app.use("/api/rooms", createMessageRouter(container.getMessagesUseCase, container.sendMessageUseCase));
+app.use("/api/auth", createAuthRouter(container.authController));
+app.use("/api/rooms", createRoomRouter(container.roomController));
+app.use("/api/users", createUserRouter(container.userController));
+app.use("/api/rooms", createMessageRouter(container.messageController));
 
 const onlineUsers = new Map();
 io.on("connection", (socket) => {
-  registerMessageSocketHandlers(io, socket,container.roomRepository, container.sendMessageUseCase, onlineUsers);
-  //Sau này có Call Socket, Noti socket chỉ:
-  //Như bước trên 
+  registerMessageSocketHandlers(io, socket, container.roomRepository, container.sendMessageUseCase, onlineUsers);
 });
 
 const PORT = process.env.PORT ?? 3000;

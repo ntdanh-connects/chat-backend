@@ -1,4 +1,4 @@
-const SocketBroadcaster = require('../../domain/repositories/SocketBroadcaster.js');
+const SocketBroadcaster = require('../../../domain/interfaces/ISocketBroadcaster.js');
 
 class SocketIOBroadcaster extends SocketBroadcaster{
     constructor(io){

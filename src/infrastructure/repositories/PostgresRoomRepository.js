@@ -1,5 +1,5 @@
-const RoomRepository = require("../../../domain/repositories/RoomRepository.js");
-const Room = require("../../../domain/entities/Room.js");
+const RoomRepository = require("../../domain/interfaces/IRoomRepository.js");
+const Room = require("../../domain/entities/Room.js");
 
 class PostgresRoomRepository extends RoomRepository{
     constructor(pool){
