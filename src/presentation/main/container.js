@@ -14,11 +14,13 @@ const GetOrCreateDirectRoomUseCase = require('../../application/use_cases/GetOrC
 const GetSearchableUserUseCase = require('../../application/use_cases/GetSearchableUserUseCase.js');
 const GetUserRoomsUseCase = require('../../application/use_cases/GetUserRoomsUseCase.js');
 const UpdateLastSeenUseCase = require('../../application/use_cases/UpdateLastSeenUseCase.js');
+const JoinRoomUseCase = require('../../application/use_cases/JoinRoomUseCase.js');
 
 const AuthController = require('../controllers/AuthController.js');
 const RoomController = require('../controllers/RoomController.js');
 const MessageController = require('../controllers/MessageController.js');
 const UserController = require('../controllers/UserController.js');
+const MessageSocketController = require('../controllers/MessageSocketController.js');
 
 function buildContainer(io) {
     // 0. Shared State & External Services
@@ -33,7 +35,7 @@ function buildContainer(io) {
     const userRepository = new PostgreUserRepository(pool);
 
     // 2. Use Cases
-    const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notificationService, onlineUsers,roomRepository);
+    const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notificationService, onlineUsers, roomRepository);
     const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
     const registerUseCase = new RegisterUseCase(authRepository);
     const loginUseCase = new LoginUseCase(authRepository);
