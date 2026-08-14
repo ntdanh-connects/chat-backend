@@ -41,12 +41,14 @@ function buildContainer(io) {
     const getSearchableUserUseCase = new GetSearchableUserUseCase(userRepository);
     const getUserRoomsUseCase = new GetUserRoomsUseCase(roomRepository, onlineUsers);
     const updateLastSeenUseCase = new UpdateLastSeenUseCase(userRepository);
+    const joinRoomUseCase = new JoinRoomUseCase(roomRepository);
 
     // 3. Controllers
     const authController = new AuthController(registerUseCase, loginUseCase);
     const roomController = new RoomController(getOrCreateDirectRoom, getUserRoomsUseCase);
     const messageController = new MessageController(getMessagesUseCase, sendMessageUseCase);
     const userController = new UserController(getSearchableUserUseCase);
+    const messageSocketController = new MessageSocketController(joinRoomUseCase, sendMessageUseCase, updateLastSeenUseCase, onlineUsers, io);
 
     return {
         onlineUsers,
@@ -64,10 +66,12 @@ function buildContainer(io) {
         getSearchableUserUseCase,
         getUserRoomsUseCase,
         updateLastSeenUseCase,
+        joinRoomUseCase,
         authController,
         roomController,
         messageController,
         userController,
+        messageSocketController,
     };
 }
 

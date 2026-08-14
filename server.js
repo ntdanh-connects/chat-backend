@@ -9,6 +9,7 @@ const registerMessageSocketHandlers = require("./src/presentation/socket/message
 const createAuthRouter = require("./src/presentation/http/authRouter.js");
 const createRoomRouter = require("./src/presentation/http/roomRouter.js");
 const createUserRouter = require("./src/presentation/http/userRouter.js");
+const socketAuthMiddeware = require("./src/presentation/middleware/socketAuthMiddleWare.js");
 
 const app = express();
 app.use(cors());
@@ -33,14 +34,11 @@ app.use("/api/rooms", createRoomRouter(container.roomController));
 app.use("/api/users", createUserRouter(container.userController));
 app.use("/api/rooms", createMessageRouter(container.messageController));
 
+io.use(socketAuthMiddeware);
 io.on("connection", (socket) => {
   registerMessageSocketHandlers(
-    io,
     socket,
-    container.roomRepository,
-    container.sendMessageUseCase,
-    container.updateLastSeenUseCase,
-    container.onlineUsers
+    container.messageSocketController
   );
 });
 
