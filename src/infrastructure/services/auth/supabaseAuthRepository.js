@@ -33,8 +33,9 @@ class SupabaseAuthRepository {
         const query = `
             SELECT u.id, u.organization_id as "organizationId", u.department_id, u.email, u.full_name,
                     u.avatar_url, u.role_name, u.role_level, u.must_change_password,
-                    o.name AS organization_name, o.domain AS organization_domain
+                    o.name AS organization_name, o.domain AS organization_domain, d.name as depart_name
             FROM public.users u JOIN public.organizations o ON u.organization_id = o.id
+                LEFT JOIN public.departments d on u.department_id = d.id
             WHERE u.id = $1    
         `;
         const result = await this.pool.query(query, [userId]);
