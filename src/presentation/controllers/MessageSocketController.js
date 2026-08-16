@@ -31,16 +31,24 @@ class MessageSocketController {
     async handleSendMessage(socket, { roomId, content, clientMessageId, attachmentUrl }) {
         try {
             const senderId = socket.userId;
-            await this.sendMessageUseCase.execute({
+            const saveMessage = await this.sendMessageUseCase.execute({
                 clientMessageId,
                 roomId,
                 senderId,
                 content,
                 attachmentUrl
             });
+            socket.emit("message:ack", {
+                clientMessageId,
+                serverId: saveMessage.id,
+                status: "sent"
+            });
         } catch (e) {
             console.log("[socket] Error sending message: ", e);
-            socket.emit("error", { message: "Gửi tin nhắn thất bại!" });
+            socket.emit("message:failed", { 
+                clientMessageId,
+                message: e.message || "Gửi tin nhắn thất bại!" 
+            });
         }
     }
 
