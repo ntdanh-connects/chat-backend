@@ -23,14 +23,14 @@ class MessageSocketController {
             socket.join(roomId);
             console.log(`[socket] User ${userId} joined room ${roomId}`);
 
-            socket.io(roomId).emit("user:status_changed", {
+            socket.to(roomId).emit("user:status_changed", {
                 userId,
                 isOnline: true
             });
             if(memberIds && this.onlineUsers){
                 const partnerId = memberIds.find(id => id != userId);
                 if(partnerId){
-                    const isPartnerOnline = Array.from(this.onlineUsers.value()).includes(partnerId);
+                    const isPartnerOnline = Array.from(this.onlineUsers.values()).includes(partnerId);
                     socket.emit("user:status_changed", {
                         userId: partnerId,
                         isOnline: isPartnerOnline
