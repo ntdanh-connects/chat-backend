@@ -14,7 +14,9 @@ class JoinRoomUseCase {
             throw new Error("You do not have permission to join this chat room");
         }
 
-        return true;
+        const memberIds = await this.roomRepository.getRoomMemberIds(roomId);
+
+        return { isMember:true, memberIds };
     }
 }
 

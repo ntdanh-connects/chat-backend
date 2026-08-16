@@ -18,11 +18,25 @@ class MessageSocketController {
     async handleJoinRoom(socket, { roomId }) {
         try {
             const userId = socket.userId;
-            await this.joinRoomUseCase.execute({ userId, roomId });
+            const { memberIds } = await this.joinRoomUseCase.execute({ userId, roomId });
 
             socket.join(roomId);
             console.log(`[socket] User ${userId} joined room ${roomId}`);
-            socket.to(roomId).emit("user:online", { userId });
+
+            socket.io(roomId).emit("user:status_changed", {
+                userId,
+                isOnline: true
+            });
+            if(memberIds && this.onlineUsers){
+                const partnerId = memberIds.find(id => id != userId);
+                if(partnerId){
+                    const isPartnerOnline = Array.from(this.onlineUsers.value()).includes(partnerId);
+                    socket.emit("user:status_changed", {
+                        userId: partnerId,
+                        isOnline: isPartnerOnline
+                    });
+                }
+            }
         } catch (e) {
             socket.emit("error", { message: e.message });
         }
