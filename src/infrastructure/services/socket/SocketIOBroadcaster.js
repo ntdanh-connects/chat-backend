@@ -14,6 +14,7 @@ class SocketIOBroadcaster extends SocketBroadcaster{
         if(!userIds || userIds.length == 0) return;
 
         const userChannels = userIds.map(id => `user:${id}`);
+        console.log(`[Socket] Bắn ${eventName} tới các kênh:`, userChannels);
 
         this.io.to(userChannels).emit(eventName,data);
     }
