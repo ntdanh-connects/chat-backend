@@ -1,7 +1,8 @@
 class AuthController {
-    constructor(registerUseCase, loginUseCase) {
+    constructor(registerUseCase, loginUseCase, refreshTokenUseCase) {
         this.registerUseCase = registerUseCase;
         this.loginUseCase = loginUseCase;
+        this.refreshTokenUseCase = refreshTokenUseCase;
     }
 
     async register(req, res) {
@@ -35,6 +36,24 @@ class AuthController {
                 status: "failed",
                 error: error.message,
             });
+        }
+    }
+
+    async refreshToken(req, res){
+        try{
+            const { refreshToken }  = req.body;
+            const result = await this.refreshTokenUseCase.execute({refreshToken});
+
+            res.status(200).json({
+                status: "success",
+                data: result,
+            });
+        }catch(error){
+            console.error("Error refreshing token: ", error);
+            res.status(401).json({
+                status: "failed",
+                error: error.message
+            })
         }
     }
 }

@@ -21,6 +21,7 @@ const RoomController = require('../controllers/RoomController.js');
 const MessageController = require('../controllers/MessageController.js');
 const UserController = require('../controllers/UserController.js');
 const MessageSocketController = require('../controllers/MessageSocketController.js');
+const RefreshTokenUseCase = require('../../application/use_cases/RefreshTokenUseCase.js');
 
 function buildContainer(io) {
     // 0. Shared State & External Services
@@ -44,9 +45,10 @@ function buildContainer(io) {
     const getUserRoomsUseCase = new GetUserRoomsUseCase(roomRepository, onlineUsers);
     const updateLastSeenUseCase = new UpdateLastSeenUseCase(userRepository);
     const joinRoomUseCase = new JoinRoomUseCase(roomRepository);
+    const refreshTokenUseCase = new RefreshTokenUseCase(authRepository);
 
     // 3. Controllers
-    const authController = new AuthController(registerUseCase, loginUseCase);
+    const authController = new AuthController(registerUseCase, loginUseCase, refreshTokenUseCase);
     const roomController = new RoomController(getOrCreateDirectRoom, getUserRoomsUseCase);
     const messageController = new MessageController(getMessagesUseCase, sendMessageUseCase);
     const userController = new UserController(getSearchableUserUseCase);
@@ -64,6 +66,7 @@ function buildContainer(io) {
         getMessagesUseCase,
         registerUseCase,
         loginUseCase,
+        refreshTokenUseCase,
         getOrCreateDirectRoom,
         getSearchableUserUseCase,
         getUserRoomsUseCase,

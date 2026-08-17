@@ -41,6 +41,15 @@ class SupabaseAuthRepository {
         const result = await this.pool.query(query, [userId]);
         return result.rows[0] || null;
     }
+
+    async refreshToken(refreshToken){
+        const {data, error} = await supabaseAdmin.auth.refreshSession({
+            refresh_token: refreshToken
+        });
+
+        if(error) throw new Error(error.message);
+        return data;
+    }
 }
 
 module.exports = SupabaseAuthRepository;
