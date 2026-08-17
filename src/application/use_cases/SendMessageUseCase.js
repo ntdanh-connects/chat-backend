@@ -22,19 +22,23 @@ class SendMessageUseCase {
 
         this.socketBroadcaster.broadcastToRoom(roomId, 'message:new', saveMessage);
 
-        if(this.roomRepository && this.notificationService){
+        if(this.roomRepository){
             const memberIds = await this.roomRepository.getRoomMemberIds(roomId);
-            const offlineUserIds = memberIds.filter(id => id !== senderId && !this.onlineUsers?.has(id));
-            if(offlineUserIds.length > 0){
-                await this.notificationService?.sendNotification({
-                    userIds: offlineUserIds,
-                    title: "Tin nhắn mới",
-                    body: content,
-                    data: {
-                        roomId,
-                        messageId : saveMessage.id
-                    }
-                })
+            const otherMembers = memberIds.filter(id => id !== senderId);
+            this.socketBroadcaster.broadcastToUsers(otherMembers, 'message:new', saveMessage);
+            if(this.notificationService){
+                const offlineUserIds = otherMembers.filter(id => !this.onlineUsers?.has(id));
+                if (offlineUserIds.length > 0) {
+                    await this.notificationService?.sendNotification({
+                        userIds: offlineUserIds,
+                        title: "Tin nhắn mới",
+                        body: content,
+                        data: {
+                            roomId,
+                            messageId: saveMessage.id
+                        }
+                    })
+                }
             }
         }
         return saveMessage;

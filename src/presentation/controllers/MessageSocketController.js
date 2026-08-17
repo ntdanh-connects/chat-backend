@@ -11,6 +11,7 @@ class MessageSocketController {
         const userId = socket.userId;
         if (userId && this.onlineUsers) {
             this.onlineUsers.set(socket.id, userId);
+            socket.join(`user:${userId}`);
             this.io.emit("user:status_changed", { userId, isOnline: true });
         }
     }

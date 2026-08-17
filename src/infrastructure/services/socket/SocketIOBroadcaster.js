@@ -9,6 +9,14 @@ class SocketIOBroadcaster extends SocketBroadcaster{
     broadcastToRoom(roomId, eventName, data){
         this.io.to(roomId).emit(eventName,data);
     }
+
+    broadcastToUsers(userIds, eventName, data){
+        if(!userIds || userIds.length == 0) return;
+
+        const userChannels = userIds.map(id => `user:${id}`);
+
+        this.io.to(userChannels).emit(eventName,data);
+    }
 }
 
 module.exports = SocketIOBroadcaster;
