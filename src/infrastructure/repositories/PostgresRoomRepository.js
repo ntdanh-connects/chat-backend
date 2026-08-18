@@ -36,8 +36,8 @@ class PostgresRoomRepository extends RoomRepository{
             const newRoomRow = roomResult.rows[0];
 
             const addMembersQuery = `
-                INSERT INTO public.room_members (room_id, user_id, role_in_room)
-                VALUES ($1, $2, 'member'), ($1, $3, 'member');
+                INSERT INTO public.room_members (room_id, user_id, role_in_room, last_read_at)
+                VALUES ($1, $2, 'member'), ($1, $3, 'member', NOW());
             `;
 
             await client.query(addMembersQuery, [newRoomRow.id, userAId, userBId]);
