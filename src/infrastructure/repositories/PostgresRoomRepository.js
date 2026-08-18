@@ -72,6 +72,15 @@ class PostgresRoomRepository extends RoomRepository{
             JOIN public.room_members rm ON r.id = rm.room_id AND rm.user_id = $1
             LEFT JOIN public.room_members rm_partner ON r.id = rm_partner.room_id AND rm_partner.user_id != $1
             LEFT JOIN public.users u ON rm_partner.user_id = u.id
+
+
+            LEFT JOIN LATERAL (
+                SELECT m.id, m.content, m.sender_id, m.created_at
+                FROM public.messages m
+                WHERE m.room_id = r.id
+                ORDER BY m.created_at DESC
+                LIMIT 1
+            ) lm ON true
             
             -- 🟢 KÉO TIN NHẮN MỚI NHẤT CỦA PHÒNG BẰNG LATERAL JOIN
             LEFT JOIN LATERAL (
@@ -80,7 +89,7 @@ class PostgresRoomRepository extends RoomRepository{
                 WHERE m.room_id = r.id
                     AND m.sender_id != $1 AND (rm.last_read_at IS NULL OR m.created_at > rm.last_read_at)
                 LIMIT 1
-            ) lm ON true
+            ) unread ON true
             
             ORDER BY COALESCE(lm.created_at, r.created_at) DESC;
         `;
