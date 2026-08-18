@@ -21,15 +21,22 @@ class PostgreMessageRepository extends MessageReposity {
         return this._toEntity(result.rows[0]);
     }
 
-    async findByRoom({roomId, since = null, limit = 50, userId}) {
+    async findByRoom({roomId, before = null, since = null, limit = 30, userId}) {
         let query = `SELECT m.*
         FROM messages m 
         JOIN room_members rm ON m.room_id = rm.room_id
         WHERE m.room_id = $1 AND rm.user_id = $2`;
-        const values = [roomId, userId]
+        const values = [roomId, userId];
+        let paramsIndex = 3;
+        if(before){
+            query += ` AND m.created_at < $${paramsIndex}`;
+            values.push(before);
+            paramsIndex++;
+        }
         if (since) {
-            query += ` AND m.created_at > $3`;
+            query += ` AND m.created_at > $${paramsIndex}`;
             values.push(since);
+            paramsIndex++;
         }
         query += ` ORDER BY m.created_at ASC LIMIT ${limit}`;
 

@@ -9,7 +9,8 @@ class MessageController {
             const userId = req.userId;
             const { roomId } = req.params;
             const since = req.query.since || null;
-            const result = await this.getMessagesUseCase.execute({ roomId, since, userId });
+            const before = req.query.before || null;
+            const result = await this.getMessagesUseCase.execute({ roomId, before, since, userId });
             res.status(200).json({
                 status: "success",
                 data: result,

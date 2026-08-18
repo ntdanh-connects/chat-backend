@@ -3,8 +3,8 @@ class GetMessagesUseCase {
         this.messageRepository = messageRepository;
     }
 
-    async execute({ roomId, since, userId }) {
-        return await this.messageRepository.findByRoom({roomId, since, userId});
+    async execute({ roomId, before ,since, userId }) {
+        return await this.messageRepository.findByRoom({ roomId, before, since, userId });
     }
 }
 
