@@ -66,7 +66,8 @@ class PostgresRoomRepository extends RoomRepository{
         const query = `
             SELECT r.id, r.organization_id, r.is_group, r.created_at,
                    u.id AS partner_id, u.full_name AS partner_name, u.email AS partner_email, u.avatar_url AS partner_avatar,
-                   lm.id AS last_msg_id, lm.content AS last_msg_content, lm.sender_id AS last_msg_sender_id, lm.created_at AS last_msg_created_at
+                   lm.id AS last_msg_id, lm.content AS last_msg_content, lm.sender_id AS last_msg_sender_id, lm.created_at AS last_msg_created_at,
+                   COALESCE(unread.count, 0)::int AS unread_count
             FROM public.rooms r
             JOIN public.room_members rm ON r.id = rm.room_id AND rm.user_id = $1
             LEFT JOIN public.room_members rm_partner ON r.id = rm_partner.room_id AND rm_partner.user_id != $1
@@ -74,10 +75,10 @@ class PostgresRoomRepository extends RoomRepository{
             
             -- 🟢 KÉO TIN NHẮN MỚI NHẤT CỦA PHÒNG BẰNG LATERAL JOIN
             LEFT JOIN LATERAL (
-                SELECT m.id, m.content, m.sender_id, m.created_at
+                SELECT COUNT(*)::int as count
                 FROM public.messages m
                 WHERE m.room_id = r.id
-                ORDER BY m.created_at DESC
+                    AND m.sender_id != $1 AND (rm.last_last_read_at IS NULL OR m.created_at > rm.last_read_at)
                 LIMIT 1
             ) lm ON true
             
@@ -104,7 +105,8 @@ class PostgresRoomRepository extends RoomRepository{
                 senderId: row.last_msg_sender_id,
                 content: row.last_msg_content,
                 createdAt: row.last_msg_created_at
-            } : null
+            } : null,
+            unreadCount: row.unread_count || 0
         }));
     }
 
@@ -115,6 +117,16 @@ class PostgresRoomRepository extends RoomRepository{
 
         const result = await this.pool.query(query,[roomId]);
         return result.rows.map(row => row.user_id);
+    }
+
+    async markAsRoomRead(roomId, userId){
+        const query = `
+            UPDATE public.room_members
+            SET last_read_at = NOW()
+            WHERE room_id = $1 AND user_id = $2
+        `;
+
+        await this.pool.query(query, [roomId, userId]);
     }
 
     _toEntity(row){

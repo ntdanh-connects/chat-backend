@@ -8,6 +8,7 @@ function createRoomRouter(roomController) {
 
     router.get('/', (req, res) => roomController.getUserRooms(req, res));
     router.post('/direct', (req, res) => roomController.getOrCreateDirectRoomHandler(req, res));
+    router.post("/:roomId/read", (req,res)=> roomController.markAsRoomRead(req,res));
 
     return router;
 }

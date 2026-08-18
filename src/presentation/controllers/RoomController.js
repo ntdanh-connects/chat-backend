@@ -1,7 +1,8 @@
 class RoomController {
-    constructor(getOrCreateDirectRoom, getUserRoomsUseCase) {
+    constructor(getOrCreateDirectRoom, getUserRoomsUseCase, markAsRoomReadUseCase) {
         this.getOrCreateDirectRoom = getOrCreateDirectRoom;
         this.getUserRoomsUseCase = getUserRoomsUseCase;
+        this.markAsRoomReadUseCase = markAsRoomReadUseCase;
     }
 
     async getUserRooms(req, res) {
@@ -40,6 +41,17 @@ class RoomController {
                 status: "failed",
                 error: error.message
             });
+        }
+    }
+
+    async markAsRoomRead(req, res){
+        try{
+            const currentUserId = req.userId;
+        const { roomId } = req.body;
+        await this.markAsRoomReadUseCase({roomId,currentUserId});
+        res.status(200).json({ status: "success "});
+        }catch(e){
+            res.status(400).json({ status: "failed", error: e.message });
         }
     }
 }

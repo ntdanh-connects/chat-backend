@@ -18,6 +18,10 @@ class RoomRepository{
     async getRoomMemberIds(roomId){
         throw new Error("getRoomMemberIds() not yet Implemet");
     }
+
+    async markAsRoomRead(roomId, userId){
+         throw new Error("markAsRoomRead() not yet Implemet");
+    }
 }
 
 module.exports = RoomRepository;
