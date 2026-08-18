@@ -78,7 +78,7 @@ class PostgresRoomRepository extends RoomRepository{
                 SELECT COUNT(*)::int as count
                 FROM public.messages m
                 WHERE m.room_id = r.id
-                    AND m.sender_id != $1 AND (rm.last_last_read_at IS NULL OR m.created_at > rm.last_read_at)
+                    AND m.sender_id != $1 AND (rm.last_read_at IS NULL OR m.created_at > rm.last_read_at)
                 LIMIT 1
             ) lm ON true
             
