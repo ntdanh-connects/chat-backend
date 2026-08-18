@@ -46,11 +46,13 @@ class RoomController {
 
     async markAsRoomRead(req, res){
         try{
-        const currentUserId = req.userId;
+        const userId = req.userId;
         const { roomId } = req.params;
-        await this.markAsRoomReadUseCase.execute({roomId,currentUserId});
+        console.log(`📥 [Server nhận markAsRoomRead] User ${userId} vừa đọc phòng ${roomId}`);
+        await this.markAsRoomReadUseCase.execute({roomId,userId});
         res.status(200).json({ status: "success "});
         }catch(e){
+            console.log(`❌ [Server lỗi khi markAsRoomRead]`, e);
             res.status(400).json({ status: "failed", error: e.message });
         }
     }
