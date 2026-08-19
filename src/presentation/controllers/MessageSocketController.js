@@ -24,18 +24,22 @@ class MessageSocketController {
 
             socket.join(roomId);
             console.log(`[socket] User ${userId} joined room ${roomId}`);
+            socket.join(roomId);
+            console.log(`[socket] User ${userId} joined room ${roomId}`);
 
-            socket.to(roomId).emit("user:status_changed", {
-                userId,
-                isOnline: true
-            });
             if(memberIds && this.onlineUsers){
                 const partnerId = memberIds.find(id => id != userId);
                 if(partnerId){
                     const isPartnerOnline = Array.from(this.onlineUsers.values()).includes(partnerId);
+
+                    let lastSeenAt = null;
+                    if(!isPartnerOnline && this.updateLastSeenUseCase?.userRepository?.getLastSeen){
+                        lastSeenAt = await this.updateLastSeenUseCase?.userRepository?.getLastSeen(partnerId);
+                    }
                     socket.emit("user:status_changed", {
                         userId: partnerId,
-                        isOnline: isPartnerOnline
+                        isOnline: isPartnerOnline,
+                        lastSeenAt: lastSeenAt ? new Date(lastSeenAt).toISOString() : null
                     });
                 }
             }
@@ -81,12 +85,15 @@ class MessageSocketController {
         if (this.onlineUsers) this.onlineUsers.delete(socket.id);
 
         if (userId) {
-            console.log(`User Offline ${userId} out app`);
-            if (this.updateLastSeenUseCase) {
-                await this.updateLastSeenUseCase.execute({ userId });
+            const stillOnline = this.onlineUsers ? Array.from(this.onlineUsers.values()).includes(userId) : false;
+            if(!stillOnline){
+                console.log(`User Offline ${userId} out app`);
+                if (this.updateLastSeenUseCase) {
+                    await this.updateLastSeenUseCase.execute({ userId });
+                }
+                const nowIso = new Date().toISOString();
+                this.io.emit("user:offline", { userId, isOnline: false, lastSeenAt: nowIso });
             }
-            const nowIso = new Date().toISOString();
-            this.io.emit("user:offline", { userId, isOnline: false, lastSeenAt: nowIso });
         }
     }
 }

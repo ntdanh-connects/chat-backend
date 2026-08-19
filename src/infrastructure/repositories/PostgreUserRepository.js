@@ -41,6 +41,12 @@ class PostgreUserRepository extends UserRepository{
         await this.pool.query(query,[userId]);
     }
 
+    async getLastSeen(userId){
+        const query = `SELECT last_seen_at FROM public.users where id = $1`;
+        const result = await this.pool.query(query,[userId]);
+        return result.rows[0]?.last_seen_at || null;
+    }
+
     _toEntity(row){
         if(!row) return null;
         return new User({
