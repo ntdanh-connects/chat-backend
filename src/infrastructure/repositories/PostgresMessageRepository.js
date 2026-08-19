@@ -38,7 +38,7 @@ class PostgreMessageRepository extends MessageReposity {
             values.push(since);
             paramsIndex++;
         }
-        query += ` ORDER BY m.created_at ASC LIMIT ${limit}`;
+        query += ` ORDER BY m.created_at DESC LIMIT ${limit}`;
 
         const result = await this.pool.query(query, values);
 

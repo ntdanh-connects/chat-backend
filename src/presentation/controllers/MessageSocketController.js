@@ -12,6 +12,7 @@ class MessageSocketController {
         if (userId && this.onlineUsers) {
             this.onlineUsers.set(socket.id, userId);
             socket.join(`user:${userId}`);
+            console.log(`User Online ${userId} open app`)
             this.io.emit("user:status_changed", { userId, isOnline: true });
         }
     }
@@ -80,6 +81,7 @@ class MessageSocketController {
         if (this.onlineUsers) this.onlineUsers.delete(socket.id);
 
         if (userId) {
+            console.log(`User Offline ${userId} out app`);
             if (this.updateLastSeenUseCase) {
                 await this.updateLastSeenUseCase.execute({ userId });
             }
