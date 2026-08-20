@@ -31,6 +31,7 @@ class MessageSocketController {
                 const partnerId = memberIds.find(id => id != userId);
                 if(partnerId){
                     const isPartnerOnline = Array.from(this.onlineUsers.values()).includes(partnerId);
+                    console.log(`🔍 [handleJoinRoom] user: ${userId} joined room ${roomId} | partnerId: ${partnerId} | isPartnerOnline: ${isPartnerOnline} | all online users:`, Array.from(this.onlineUsers.values()));
 
                     let lastSeenAt = null;
                     if(!isPartnerOnline && this.updateLastSeenUseCase?.userRepository?.getLastSeen){
@@ -40,6 +41,12 @@ class MessageSocketController {
                         userId: partnerId,
                         isOnline: isPartnerOnline,
                         lastSeenAt: lastSeenAt ? new Date(lastSeenAt).toISOString() : null
+                    });
+
+                    // 🟢 Báo cho partner biết user này cũng đang online:
+                    this.io.to(`user:${partnerId}`).emit("user:status_changed", {
+                        userId: userId,
+                        isOnline: true
                     });
                 }
             }
