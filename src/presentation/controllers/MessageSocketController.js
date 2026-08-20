@@ -44,6 +44,8 @@ class MessageSocketController {
                         lastSeenAt = await this.updateLastSeenUseCase.userRepository.getLastSeen(partnerId);
                     }
 
+                    console.log(`📡 [Socket handleJoinRoom] Emitting to user ${userId} about partner ${partnerId} | isOnline: ${isPartnerOnline} | lastSeenAt: ${lastSeenAt}`);
+
                     socket.emit("user:status_changed", {
                         userId: partnerId,
                         isOnline: isPartnerOnline,
