@@ -11,7 +11,7 @@ class PostgreUserRepository extends UserRepository{
         const query = `
             SELECT u.id, u.organization_id, u.department_id, u.email, u.full_name,
                    u.avatar_url, u.role_name, u.role_level, u.must_change_password,
-                   u.is_active, u.created_at, d.name AS department_name
+                   u.is_active, u.created_at, d.name AS department_name, u.last_seen_at
             FROM public.users u
             JOIN public.organizations o ON u.organization_id = o.id
             LEFT JOIN public.departments d ON u.department_id = d.id

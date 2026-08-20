@@ -65,7 +65,7 @@ class PostgresRoomRepository extends RoomRepository{
     async getUserRooms(userId){
         const query = `
             SELECT r.id, r.organization_id, r.is_group, r.created_at,
-                   u.id AS partner_id, u.full_name AS partner_name, u.email AS partner_email, u.avatar_url AS partner_avatar,
+                   u.id AS partner_id, u.full_name AS partner_name, u.email AS partner_email, u.avatar_url AS partner_avatar, u.last_seen_at AS partner_last_seen,
                    lm.id AS last_msg_id, lm.content AS last_msg_content, lm.sender_id AS last_msg_sender_id, lm.created_at AS last_msg_created_at,
                    COALESCE(unread.count, 0)::int AS unread_count
             FROM public.rooms r
@@ -104,7 +104,8 @@ class PostgresRoomRepository extends RoomRepository{
                 fullName: row.partner_name,
                 email: row.partner_email,
                 avatarUrl: row.partner_avatar,
-                isActive: true
+                isActive: true,
+                lastSeenAt: row.partner_last_seen
             }] : [],
             // 🟢 TRẢ VỀ ĐỐI TƯỢNG lastMessage NẾU PHÒNG ĐÓ ĐÃ CÓ TIN NHẮN
             lastMessage: row.last_msg_id ? {
