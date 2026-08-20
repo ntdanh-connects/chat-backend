@@ -38,9 +38,16 @@ class MessageSocketController {
                 const partnerId = memberIds.find(id => id != userId);
                 if (partnerId) {
                     const isPartnerOnline = Array.from(this.onlineUsers.values()).includes(partnerId);
+
+                    let lastSeenAt = null;
+                    if (!isPartnerOnline && this.updateLastSeenUseCase?.userRepository?.getLastSeen) {
+                        lastSeenAt = await this.updateLastSeenUseCase.userRepository.getLastSeen(partnerId);
+                    }
+
                     socket.emit("user:status_changed", {
                         userId: partnerId,
-                        isOnline: isPartnerOnline
+                        isOnline: isPartnerOnline,
+                        lastSeenAt: lastSeenAt ? new Date(lastSeenAt).toISOString() : null
                     });
                 }
             }
@@ -93,6 +100,7 @@ class MessageSocketController {
                     await this.updateLastSeenUseCase.execute({ userId });
                 }
                 const nowIso = new Date().toISOString();
+                this.io.emit("user:status_changed", { userId, isOnline: false, lastSeenAt: nowIso });
                 this.io.emit("user:offline", { userId, isOnline: false, lastSeenAt: nowIso });
             }
         }
