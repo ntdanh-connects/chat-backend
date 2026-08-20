@@ -14,21 +14,36 @@ class MessageSocketController {
             socket.join(`user:${userId}`);
             console.log(`🟢 [Global Online] User ${userId} vừa mở App`);
 
-            // Phát cho toàn mạng biết user này đang Online:
+            // 1. Phát cho toàn mạng biết user này đang Online:
             this.io.emit("user:status_changed", { userId, isOnline: true });
 
-            // Trả về cho socket này danh sách những ai đang online:
+            // 2. Gửi ngay cho người vừa mở app danh sách những ai đang online từ trước:
             const allOnlineUserIds = Array.from(new Set(this.onlineUsers.values()));
-            socket.emit("users:online_list", allOnlineUserIds);
+            for (const onlineId of allOnlineUserIds) {
+                if (onlineId !== userId) {
+                    socket.emit("user:status_changed", { userId: onlineId, isOnline: true });
+                }
+            }
         }
     }
 
     async handleJoinRoom(socket, { roomId }) {
         try {
             const userId = socket.userId;
-            await this.joinRoomUseCase.execute({ userId, roomId });
+            const { memberIds } = await this.joinRoomUseCase.execute({ userId, roomId });
             socket.join(roomId);
             console.log(`[socket] User ${userId} joined room ${roomId}`);
+
+            if (memberIds && this.onlineUsers) {
+                const partnerId = memberIds.find(id => id != userId);
+                if (partnerId) {
+                    const isPartnerOnline = Array.from(this.onlineUsers.values()).includes(partnerId);
+                    socket.emit("user:status_changed", {
+                        userId: partnerId,
+                        isOnline: isPartnerOnline
+                    });
+                }
+            }
         } catch (e) {
             socket.emit("error", { message: e.message });
         }
