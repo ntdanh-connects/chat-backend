@@ -12,44 +12,23 @@ class MessageSocketController {
         if (userId && this.onlineUsers) {
             this.onlineUsers.set(socket.id, userId);
             socket.join(`user:${userId}`);
-            console.log(`User Online ${userId} open app`)
+            console.log(`🟢 [Global Online] User ${userId} vừa mở App`);
+
+            // Phát cho toàn mạng biết user này đang Online:
             this.io.emit("user:status_changed", { userId, isOnline: true });
+
+            // Trả về cho socket này danh sách những ai đang online:
+            const allOnlineUserIds = Array.from(new Set(this.onlineUsers.values()));
+            socket.emit("users:online_list", allOnlineUserIds);
         }
     }
 
     async handleJoinRoom(socket, { roomId }) {
         try {
             const userId = socket.userId;
-            const { memberIds } = await this.joinRoomUseCase.execute({ userId, roomId });
-
+            await this.joinRoomUseCase.execute({ userId, roomId });
             socket.join(roomId);
             console.log(`[socket] User ${userId} joined room ${roomId}`);
-            socket.join(roomId);
-            console.log(`[socket] User ${userId} joined room ${roomId}`);
-
-            if(memberIds && this.onlineUsers){
-                const partnerId = memberIds.find(id => id != userId);
-                if(partnerId){
-                    const isPartnerOnline = Array.from(this.onlineUsers.values()).includes(partnerId);
-                    console.log(`🔍 [handleJoinRoom] user: ${userId} joined room ${roomId} | partnerId: ${partnerId} | isPartnerOnline: ${isPartnerOnline} | all online users:`, Array.from(this.onlineUsers.values()));
-
-                    let lastSeenAt = null;
-                    if(!isPartnerOnline && this.updateLastSeenUseCase?.userRepository?.getLastSeen){
-                        lastSeenAt = await this.updateLastSeenUseCase?.userRepository?.getLastSeen(partnerId);
-                    }
-                    socket.emit("user:status_changed", {
-                        userId: partnerId,
-                        isOnline: isPartnerOnline,
-                        lastSeenAt: lastSeenAt ? new Date(lastSeenAt).toISOString() : null
-                    });
-
-                    // 🟢 Báo cho partner biết user này cũng đang online:
-                    this.io.to(`user:${partnerId}`).emit("user:status_changed", {
-                        userId: userId,
-                        isOnline: true
-                    });
-                }
-            }
         } catch (e) {
             socket.emit("error", { message: e.message });
         }
