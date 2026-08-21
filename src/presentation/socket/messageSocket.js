@@ -7,6 +7,8 @@ function registerMessageSocketHandlers(socket, messageSocketController) {
     socket.on("typing:stop", (data) => messageSocketController.handleTypingStop(socket, data));
 
     socket.on("disconnect", () => messageSocketController.handleDisconnect(socket));
+    socket.on("message:delivered", (data)=> messageSocketController.handleMessageDelivered(socket,data));
+    socket.on("room:read", (data)=> messageSocketController.handleRoomRead(socket,data));
 }
 
 module.exports = registerMessageSocketHandlers;

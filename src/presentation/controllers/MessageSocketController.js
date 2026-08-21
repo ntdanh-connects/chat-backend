@@ -107,6 +107,21 @@ class MessageSocketController {
             }
         }
     }
+
+    async handleMessageDelivered(socket, { roomId, messageId, senderId }){
+        this.io.to(`user:${senderId}`).emit("message:status_updated", {
+            roomId,
+            messageId,
+            status: "delivered"
+        })
+    }
+
+    async handleRoomRead(socket, { roomId }){
+        socket.to(roomId).emit("room:messages_read", {
+            roomId,
+            readerId: socket.userId
+        })
+    }
 }
 
 module.exports = MessageSocketController;
