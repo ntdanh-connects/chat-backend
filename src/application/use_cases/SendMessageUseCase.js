@@ -20,12 +20,14 @@ class SendMessageUseCase {
 
         const saveMessage = await this.messageRepository.insert(message);
 
+        // 🟢 CHỈ PHÁT 1 LẦN DUY NHẤT VÀO PHÒNG CHAT:
         this.socketBroadcaster.broadcastToRoom(roomId, 'message:new', saveMessage);
 
         if(this.roomRepository){
             const memberIds = await this.roomRepository.getRoomMemberIds(roomId);
             const otherMembers = memberIds.filter(id => id !== senderId);
-            this.socketBroadcaster.broadcastToUsers(otherMembers, 'message:new', saveMessage);
+            
+            // Gửi Push Notification cho những ai đang Offline:
             if(this.notificationService){
                 const offlineUserIds = otherMembers.filter(id => !this.onlineUsers?.has(id));
                 if (offlineUserIds.length > 0) {
