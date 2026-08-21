@@ -13,10 +13,10 @@ class SocketIOBroadcaster extends SocketBroadcaster{
     broadcastToUsers(userIds, eventName, data){
         if(!userIds || userIds.length == 0) return;
 
-        const userChannels = userIds.map(id => `user:${id}`);
-        console.log(`[Socket] Bắn ${eventName} tới các kênh:`, userChannels);
-
-        this.io.to(userChannels).emit(eventName,data);
+        userIds.forEach(id => {
+            console.log(`📡 [Socket] Bắn ${eventName} tới kênh user:${id}`);
+            this.io.to(`user:${id}`).emit(eventName, data);
+        });
     }
 }
 
