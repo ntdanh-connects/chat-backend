@@ -23,6 +23,8 @@ const UserController = require('../controllers/UserController.js');
 const MessageSocketController = require('../controllers/MessageSocketController.js');
 const RefreshTokenUseCase = require('../../application/use_cases/RefreshTokenUseCase.js');
 const MarkAsRoomReadUseCase = require('../../application/use_cases/MarkAsRoomReadUseCase.js');
+const S3StorageService = require('../../infrastructure/services/s3/S3StorageService.js');
+const UploadController = require('../controllers/UploadController.js');
 
 function buildContainer(io) {
     // 0. Shared State & External Services
@@ -35,6 +37,7 @@ function buildContainer(io) {
     const authRepository = new SupabaseAuthRepository(pool);
     const roomRepository = new PostgresRoomRepository(pool);
     const userRepository = new PostgreUserRepository(pool);
+    const storageService = new S3StorageService();
 
     // 2. Use Cases
     const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notificationService, onlineUsers, roomRepository);
@@ -48,6 +51,7 @@ function buildContainer(io) {
     const joinRoomUseCase = new JoinRoomUseCase(roomRepository);
     const refreshTokenUseCase = new RefreshTokenUseCase(authRepository);
     const markAsRoomReadUseCase = new MarkAsRoomReadUseCase(roomRepository);
+    const uploadAttachmentUseCase = new UpdateLastSeenUseCase(storageService);
 
     // 3. Controllers
     const authController = new AuthController(registerUseCase, loginUseCase, refreshTokenUseCase);
@@ -55,6 +59,7 @@ function buildContainer(io) {
     const messageController = new MessageController(getMessagesUseCase, sendMessageUseCase);
     const userController = new UserController(getSearchableUserUseCase);
     const messageSocketController = new MessageSocketController(joinRoomUseCase, sendMessageUseCase, updateLastSeenUseCase, onlineUsers, io);
+    const uploadController = new UploadController(uploadAttachmentUseCase);
 
     return {
         onlineUsers,
@@ -64,6 +69,7 @@ function buildContainer(io) {
         roomRepository,
         authRepository,
         userRepository,
+        storageService,
         sendMessageUseCase,
         getMessagesUseCase,
         registerUseCase,
@@ -75,11 +81,13 @@ function buildContainer(io) {
         getUserRoomsUseCase,
         updateLastSeenUseCase,
         joinRoomUseCase,
+        uploadAttachmentUseCase,
         authController,
         roomController,
         messageController,
         userController,
         messageSocketController,
+        uploadController,
     };
 }
 

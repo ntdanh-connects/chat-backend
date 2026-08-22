@@ -10,6 +10,7 @@ const createAuthRouter = require("./src/presentation/http/authRouter.js");
 const createRoomRouter = require("./src/presentation/http/roomRouter.js");
 const createUserRouter = require("./src/presentation/http/userRouter.js");
 const socketAuthMiddeware = require("./src/presentation/middleware/socketAuthMiddleWare.js");
+const createUploadRouter = require("./src/presentation/http/uploadRouter.js");
 
 const app = express();
 app.use(cors());
@@ -33,6 +34,7 @@ app.use("/api/auth", createAuthRouter(container.authController));
 app.use("/api/rooms", createRoomRouter(container.roomController));
 app.use("/api/users", createUserRouter(container.userController));
 app.use("/api/rooms", createMessageRouter(container.messageController));
+app.use("api/upload", createUploadRouter(container.uploadController));
 
 io.use(socketAuthMiddeware);
 io.on("connection", (socket) => {
