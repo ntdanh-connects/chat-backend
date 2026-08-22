@@ -10,8 +10,8 @@ class UploadAttachmentUseCase{
 
         const publicUrl = await this.storageService.uploadFile({
             buffer: file.buffer,
-            originalName: file.originalName,
-            mimeType: file.mimeType,
+            originalName: file.originalname || file.originalName || 'image.jpg',
+            mimeType: file.mimetype || file.mimeType || 'image/jpeg',
             folder: 'attachments',
         });
 

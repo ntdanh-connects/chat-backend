@@ -34,7 +34,7 @@ app.use("/api/auth", createAuthRouter(container.authController));
 app.use("/api/rooms", createRoomRouter(container.roomController));
 app.use("/api/users", createUserRouter(container.userController));
 app.use("/api/rooms", createMessageRouter(container.messageController));
-app.use("api/upload", createUploadRouter(container.uploadController));
+app.use("/api/upload", createUploadRouter(container.uploadController));
 
 io.use(socketAuthMiddeware);
 io.on("connection", (socket) => {

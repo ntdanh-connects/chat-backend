@@ -20,7 +20,8 @@ class S3StorageService extends IStorageService{
     }
 
     async uploadFile({ buffer, originalName, mimeType, folder = 'images'}){
-        const fileExt = originalName.split('.').pop() || 'jpg';
+        const safeName = originalName || 'image.jpg';
+        const fileExt = safeName.split('.').pop() || 'jpg';
         const uniqueFileName = `${folder}/${uuidv4()}.${fileExt}`;
 
         const command = new PutObjectCommand({
