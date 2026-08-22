@@ -25,6 +25,7 @@ const RefreshTokenUseCase = require('../../application/use_cases/RefreshTokenUse
 const MarkAsRoomReadUseCase = require('../../application/use_cases/MarkAsRoomReadUseCase.js');
 const S3StorageService = require('../../infrastructure/services/s3/S3StorageService.js');
 const UploadController = require('../controllers/UploadController.js');
+const UploadAttachmentUseCase = require('../../application/use_cases/UploadAttachmentUseCase.js');
 
 function buildContainer(io) {
     // 0. Shared State & External Services
@@ -51,7 +52,7 @@ function buildContainer(io) {
     const joinRoomUseCase = new JoinRoomUseCase(roomRepository);
     const refreshTokenUseCase = new RefreshTokenUseCase(authRepository);
     const markAsRoomReadUseCase = new MarkAsRoomReadUseCase(roomRepository);
-    const uploadAttachmentUseCase = new UpdateLastSeenUseCase(storageService);
+    const uploadAttachmentUseCase = new UploadAttachmentUseCase(storageService);
 
     // 3. Controllers
     const authController = new AuthController(registerUseCase, loginUseCase, refreshTokenUseCase);

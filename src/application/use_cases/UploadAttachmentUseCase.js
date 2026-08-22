@@ -18,3 +18,5 @@ class UploadAttachmentUseCase{
         return { url: publicUrl };
     }
 }
+
+module.exports = UploadAttachmentUseCase;
