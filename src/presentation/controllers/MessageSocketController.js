@@ -1,5 +1,5 @@
 class MessageSocketController {
-    constructor(joinRoomUseCase, sendMessageUseCase, updateLastSeenUseCase, syncMissedEventsUseCase,onlineUsers, io) {
+    constructor(joinRoomUseCase, sendMessageUseCase, updateLastSeenUseCase, syncMissedEventsUseCase, onlineUsers, io) {
         this.joinRoomUseCase = joinRoomUseCase;
         this.sendMessageUseCase = sendMessageUseCase;
         this.updateLastSeenUseCase = updateLastSeenUseCase;
@@ -19,14 +19,14 @@ class MessageSocketController {
             this.io.emit("user:status_changed", { userId, isOnline: true });
 
             const lastSeqId = Number(socket.handshake.auth?.lastSeqId) || 0;
-            if(this.syncMissedEventsUseCase){
+            if (this.syncMissedEventsUseCase) {
                 const PAGE_SIZE = 200;
-                const { events, hasMore} = await this.syncMissedEventsUseCase.execute({
+                const { events, hasMore } = await this.syncMissedEventsUseCase.execute({
                     userId,
                     lastSeqId,
                     limit: PAGE_SIZE
                 });
-                if(events && events.length > 0){
+                if (events && events.length > 0) {
                     console.log(`📡 [Cursor Sync] Gửi bù ${events.length} sự kiện cho User ${userId}`);
                     socket.emit("sync:delta", {
                         events: events,
@@ -93,9 +93,9 @@ class MessageSocketController {
             });
         } catch (e) {
             console.log("[socket] Error sending message: ", e);
-            socket.emit("message:failed", { 
+            socket.emit("message:failed", {
                 clientMessageId,
-                message: e.message || "Gửi tin nhắn thất bại!" 
+                message: e.message || "Gửi tin nhắn thất bại!"
             });
         }
     }
@@ -114,7 +114,7 @@ class MessageSocketController {
 
         if (userId) {
             const stillOnline = this.onlineUsers ? Array.from(this.onlineUsers.values()).includes(userId) : false;
-            if(!stillOnline){
+            if (!stillOnline) {
                 console.log(`User Offline ${userId} out app`);
                 if (this.updateLastSeenUseCase) {
                     await this.updateLastSeenUseCase.execute({ userId });
@@ -126,7 +126,7 @@ class MessageSocketController {
         }
     }
 
-    async handleMessageDelivered(socket, { roomId, messageId, senderId }){
+    async handleMessageDelivered(socket, { roomId, messageId, senderId }) {
         this.io.to(`user:${senderId}`).emit("message:status_updated", {
             roomId,
             messageId,
@@ -134,12 +134,33 @@ class MessageSocketController {
         })
     }
 
-    async handleRoomRead(socket, { roomId }){
+    async handleRoomRead(socket, { roomId }) {
         socket.to(roomId).emit("room:messages_read", {
             roomId,
             readerId: socket.userId
         })
     }
+
+    async handleSyncMore(socket, { lastSeqId }) {
+        try {
+            const userId = socket.userId;
+            const PAGE_SIZE = 200;
+            if (this.syncMissedEventsUseCase) {
+                const { events, hasMore } = await this.syncMissedEventsUseCase.execute({
+                    userId,
+                    lastSeqId: Number(lastSeqId) || 0,
+                    limit: PAGE_SIZE
+                });
+                socket.emit("sync:delta", {
+                    events: events,
+                    hasMore: hasMore
+                });
+            }
+        } catch (e) {
+            console.error("❌ [handleSyncMore] Lỗi sync thêm:", e);
+        }
+    }
+
 }
 
 module.exports = MessageSocketController;

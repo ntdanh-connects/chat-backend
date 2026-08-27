@@ -9,6 +9,7 @@ function registerMessageSocketHandlers(socket, messageSocketController) {
     socket.on("disconnect", () => messageSocketController.handleDisconnect(socket));
     socket.on("message:delivered", (data)=> messageSocketController.handleMessageDelivered(socket,data));
     socket.on("room:read", (data)=> messageSocketController.handleRoomRead(socket,data));
+    socket.on("sync:more", (data) => messageSocketController.handleSyncMore(socket, data));
 }
 
 module.exports = registerMessageSocketHandlers;

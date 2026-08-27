@@ -3,7 +3,7 @@ class SyncMissedEventUseCase{
         this.eventRepository = eventRepository;
     }
 
-    async exeucte({ userId, lastSeqId =0, limit = 200 }){
+    async execute({ userId, lastSeqId =0, limit = 200 }){
         if(!userId){
             throw new Error("User required");
         }
