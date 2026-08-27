@@ -2,6 +2,7 @@ const IEventRepository = require("../../domain/interfaces/IEventRepository");
 
 class PostgresEventRepository extends IEventRepository{
     constructor(pool) {
+        super();
         this.pool = pool;
     }
 
