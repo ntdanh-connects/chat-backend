@@ -1,13 +1,14 @@
 class MessageSocketController {
-    constructor(joinRoomUseCase, sendMessageUseCase, updateLastSeenUseCase, onlineUsers, io) {
+    constructor(joinRoomUseCase, sendMessageUseCase, updateLastSeenUseCase, syncMissedEventsUseCase,onlineUsers, io) {
         this.joinRoomUseCase = joinRoomUseCase;
         this.sendMessageUseCase = sendMessageUseCase;
         this.updateLastSeenUseCase = updateLastSeenUseCase;
+        this.syncMissedEventsUseCase = syncMissedEventsUseCase;
         this.onlineUsers = onlineUsers;
         this.io = io;
     }
 
-    onConnect(socket) {
+    async onConnect(socket) {
         const userId = socket.userId;
         if (userId && this.onlineUsers) {
             this.onlineUsers.set(socket.id, userId);
@@ -16,6 +17,23 @@ class MessageSocketController {
 
             // 1. Phát cho toàn mạng biết user này đang Online:
             this.io.emit("user:status_changed", { userId, isOnline: true });
+
+            const lastSeqId = Number(socket.handshake.auth?.lastSeqId) || 0;
+            if(this.syncMissedEventsUseCase){
+                const PAGE_SIZE = 200;
+                const { events, hasMore} = await this.syncMissedEventsUseCase.execute({
+                    userId,
+                    lastSeqId,
+                    limit: PAGE_SIZE
+                });
+                if(events && events.length > 0){
+                    console.log(`📡 [Cursor Sync] Gửi bù ${events.length} sự kiện cho User ${userId}`);
+                    socket.emit("sync:delta", {
+                        events: events,
+                        hasMore: hasMore,
+                    });
+                }
+            }
 
             // 2. Gửi ngay cho người vừa mở app danh sách những ai đang online từ trước:
             const allOnlineUserIds = Array.from(new Set(this.onlineUsers.values()));

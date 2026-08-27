@@ -26,6 +26,8 @@ const MarkAsRoomReadUseCase = require('../../application/use_cases/MarkAsRoomRea
 const S3StorageService = require('../../infrastructure/services/s3/S3StorageService.js');
 const UploadController = require('../controllers/UploadController.js');
 const UploadAttachmentUseCase = require('../../application/use_cases/UploadAttachmentUseCase.js');
+const PostgresEventRepository = require('../../infrastructure/repositories/PostgresEventRepository.js');
+const SyncMissedEventUseCase = require('../../application/use_cases/SyncMissedEventUseCase.js');
 
 function buildContainer(io) {
     // 0. Shared State & External Services
@@ -39,9 +41,10 @@ function buildContainer(io) {
     const roomRepository = new PostgresRoomRepository(pool);
     const userRepository = new PostgreUserRepository(pool);
     const storageService = new S3StorageService();
+    const eventRepository = new PostgresEventRepository(pool);
 
     // 2. Use Cases
-    const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notificationService, onlineUsers, roomRepository);
+    const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notificationService ,onlineUsers, roomRepository,eventRepository);
     const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
     const registerUseCase = new RegisterUseCase(authRepository);
     const loginUseCase = new LoginUseCase(authRepository);
@@ -53,25 +56,28 @@ function buildContainer(io) {
     const refreshTokenUseCase = new RefreshTokenUseCase(authRepository);
     const markAsRoomReadUseCase = new MarkAsRoomReadUseCase(roomRepository);
     const uploadAttachmentUseCase = new UploadAttachmentUseCase(storageService);
+    const syncMissedEventUseCase = new SyncMissedEventUseCase(eventRepository);
 
     // 3. Controllers
     const authController = new AuthController(registerUseCase, loginUseCase, refreshTokenUseCase);
     const roomController = new RoomController(getOrCreateDirectRoom, getUserRoomsUseCase, markAsRoomReadUseCase);
     const messageController = new MessageController(getMessagesUseCase, sendMessageUseCase);
     const userController = new UserController(getSearchableUserUseCase);
-    const messageSocketController = new MessageSocketController(joinRoomUseCase, sendMessageUseCase, updateLastSeenUseCase, onlineUsers, io);
+    const messageSocketController = new MessageSocketController(joinRoomUseCase, sendMessageUseCase, updateLastSeenUseCase,syncMissedEventUseCase ,onlineUsers, io);
     const uploadController = new UploadController(uploadAttachmentUseCase);
 
     return {
         onlineUsers,
         notificationService,
         messageRepository,
+        eventRepository,
         socketBroadcaster,
         roomRepository,
         authRepository,
         userRepository,
         storageService,
         sendMessageUseCase,
+        syncMissedEventUseCase,
         getMessagesUseCase,
         registerUseCase,
         loginUseCase,
