@@ -28,6 +28,10 @@ const UploadController = require('../controllers/UploadController.js');
 const UploadAttachmentUseCase = require('../../application/use_cases/UploadAttachmentUseCase.js');
 const PostgresEventRepository = require('../../infrastructure/repositories/PostgresEventRepository.js');
 const SyncMissedEventUseCase = require('../../application/use_cases/SyncMissedEventUseCase.js');
+const PostgresDeviceRepository = require('../../infrastructure/repositories/PostgresDeviceRepository.js');
+const FirebaseNotificationService = require('../../infrastructure/services/notification/FirebaseNotificationService.js');
+const RegisterFcmTokenUseCase = require('../../application/use_cases/RegisterFcmTokenUseCase.js');
+const UnRegisterFcmTokenUseCase = require('../../application/use_cases/UnRegisterFcmTokenUseCase.js');
 
 function buildContainer(io) {
     // 0. Shared State & External Services
@@ -42,6 +46,8 @@ function buildContainer(io) {
     const userRepository = new PostgreUserRepository(pool);
     const storageService = new S3StorageService();
     const eventRepository = new PostgresEventRepository(pool);
+    const deviceRepository = new PostgresDeviceRepository(pool);
+    const notifcationService = new FirebaseNotificationService(deviceRepository);
 
     // 2. Use Cases
     const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notificationService ,onlineUsers, roomRepository,eventRepository, userRepository);
@@ -57,12 +63,14 @@ function buildContainer(io) {
     const markAsRoomReadUseCase = new MarkAsRoomReadUseCase(roomRepository);
     const uploadAttachmentUseCase = new UploadAttachmentUseCase(storageService);
     const syncMissedEventUseCase = new SyncMissedEventUseCase(eventRepository);
+    const regitserFcmTokenUseCase = new RegisterFcmTokenUseCase(deviceRepository);
+    const unregitserFcmTokenUseCase = new UnRegisterFcmTokenUseCase(deviceRepository);
 
     // 3. Controllers
     const authController = new AuthController(registerUseCase, loginUseCase, refreshTokenUseCase);
     const roomController = new RoomController(getOrCreateDirectRoom, getUserRoomsUseCase, markAsRoomReadUseCase);
     const messageController = new MessageController(getMessagesUseCase, sendMessageUseCase);
-    const userController = new UserController(getSearchableUserUseCase);
+    const userController = new UserController(getSearchableUserUseCase,regitserFcmTokenUseCase,unregitserFcmTokenUseCase);
     const messageSocketController = new MessageSocketController(joinRoomUseCase, sendMessageUseCase, updateLastSeenUseCase,syncMissedEventUseCase ,onlineUsers, io);
     const uploadController = new UploadController(uploadAttachmentUseCase);
 
@@ -89,6 +97,8 @@ function buildContainer(io) {
         updateLastSeenUseCase,
         joinRoomUseCase,
         uploadAttachmentUseCase,
+        regitserFcmTokenUseCase,
+        unregitserFcmTokenUseCase,
         authController,
         roomController,
         messageController,
