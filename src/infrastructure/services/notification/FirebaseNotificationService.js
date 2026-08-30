@@ -14,7 +14,7 @@ class FirebaseNotificationService extends INotificationService {
                 if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
                     credential = admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON));
                 } else {
-                    const localPath = path.json(__dirname, '../../config/serviceAccountKey.js');
+                    const localPath = path.join(__dirname, '../../config/serviceAccountKey.json');
                     if (fs.existsSync(localPath)) {
                         credential = admin.credential.cert(require(localPath));
                     }
@@ -33,7 +33,7 @@ class FirebaseNotificationService extends INotificationService {
         if(!userIds || userIds.length === 0 || !admin.apps.length)return;
 
         try{
-            const tokens = await this.deviceRepository.getTokenByUserIds(userIds);
+            const tokens = await this.deviceRepository.getTokensByUserIds(userIds);
 
             if(tokens.length === 0)return;
 
@@ -44,7 +44,7 @@ class FirebaseNotificationService extends INotificationService {
 
             const payload = {
                 data: StringData,
-                android: { priority: hight },
+                android: { priority: 'high' },
                 apns: {
                     headers: {
                         'apns-priority': '10',
@@ -64,7 +64,7 @@ class FirebaseNotificationService extends INotificationService {
                     ...payload
                 });
 
-                response.response.forEach((resp, idx)=>{
+                response.responses.forEach((resp, idx)=>{
                     if(!resp.success){
                         const code = resp.error?.code;
                         if (code === 'messaging/invalid-registration-token' || code === 'messaging/registration-token-not-registered') {
@@ -75,7 +75,7 @@ class FirebaseNotificationService extends INotificationService {
             }
 
             if(failedTokens.length > 0){
-                await this.pool.query(`DELETE FROM user_devices WHERE fcm_token = ANY($1::text[])`,[failedTokens]);
+                await this.deviceRepository.deleteTokens(failedTokens);
                 console.log(`"Push Đã tự động dọn ${failedTokens.length} token hết hạn."`)
             }
         }catch(e){

@@ -36,7 +36,7 @@ const UnRegisterFcmTokenUseCase = require('../../application/use_cases/UnRegiste
 function buildContainer(io) {
     // 0. Shared State & External Services
     const onlineUsers = new Map();
-    const notificationService = new WebhookNotificationService(process.env.WEBHOOK_URL);
+    //const notificationService = new WebhookNotificationService(process.env.WEBHOOK_URL);
 
     // 1. Infrastructure Implementations
     const messageRepository = new PostgresMessageRepository(pool);
@@ -50,7 +50,7 @@ function buildContainer(io) {
     const notifcationService = new FirebaseNotificationService(deviceRepository);
 
     // 2. Use Cases
-    const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notificationService ,onlineUsers, roomRepository,eventRepository, userRepository);
+    const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notifcationService ,onlineUsers, roomRepository,eventRepository, userRepository);
     const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
     const registerUseCase = new RegisterUseCase(authRepository);
     const loginUseCase = new LoginUseCase(authRepository);
@@ -76,9 +76,10 @@ function buildContainer(io) {
 
     return {
         onlineUsers,
-        notificationService,
+        //notificationService,
         messageRepository,
         eventRepository,
+        notifcationService,
         socketBroadcaster,
         roomRepository,
         authRepository,
