@@ -1,16 +1,17 @@
 const Message = require('../../domain/entities/Message.js');
 
 class SendMessageUseCase {
-    constructor(messageRepository, socketBroadcaster, notificationService, onlineUsers,roomRepository,eventRepository) {
+    constructor(messageRepository, socketBroadcaster, notificationService, onlineUsers, roomRepository, eventRepository, userRepository) {
         this.messageRepository = messageRepository;
         this.socketBroadcaster = socketBroadcaster;
         this.notificationService = notificationService;
         this.onlineUsers = onlineUsers;
         this.roomRepository = roomRepository;
         this.eventRepository = eventRepository;
+        this.userRepository = userRepository;
     }
 
-    async execute({ clientMessageId, roomId, senderId, content, attachmentUrl, receiverId }){
+    async execute({ clientMessageId, roomId, senderId, content, attachmentUrl, receiverId }) {
         const message = new Message({
             clientMessageId,
             roomId,
@@ -19,47 +20,80 @@ class SendMessageUseCase {
             attachmentUrl
         });
 
+        // 1. Lưu tin nhắn vào bảng chính
         const saveMessage = await this.messageRepository.insert(message);
 
-        if(this.roomRepository){
+        if (this.roomRepository) {
             const memberIds = await this.roomRepository.getRoomMemberIds(roomId);
             const otherMembers = memberIds.filter(id => id !== senderId);
 
-            if(this.eventRepository && otherMembers.length > 0){
-                await this.eventRepository.createEventForRecipients({
+            const payloadData = {
+                localId: saveMessage.clientMessageId || saveMessage.id,
+                serverId: saveMessage.id,
+                roomId: saveMessage.roomId,
+                senderId: saveMessage.senderId,
+                content: saveMessage.content,
+                attachmentUrl: saveMessage.attachmentUrl || "",
+                createdAt: saveMessage.createdAt,
+                status: 'sent'
+            };
+
+            // 2. Fan-out vào user_events và nhận về map seqId của từng người
+            let userSeqMap = {};
+            if (this.eventRepository && otherMembers.length > 0) {
+                userSeqMap = await this.eventRepository.createEventForRecipients({
                     recipientIds: otherMembers,
                     eventType: 'new_message',
                     roomId,
                     messageId: saveMessage.id,
-                    payload: {
-                        localId: saveMessage.clientMessageId || saveMessage.id,
-                        serverId: saveMessage.id,
-                        roomId: saveMessage.roomId,
-                        senderId: saveMessage.senderId,
-                        content: saveMessage.content,
-                        attachmentUrl: saveMessage.attachmentUrl || "",
-                        createdAt: saveMessage.createdAt,
-                        status: 'sent'
-                    }
-                })
+                    payload: payloadData
+                });
             }
-            
-            // 🟢 1. Phát Socket Realtime tới các thành viên khác:
-            this.socketBroadcaster.broadcastToUsers(otherMembers, 'message:new', saveMessage);
 
-            // 🟢 2. Gửi Push Notification cho những ai đang Offline:
-            if(this.notificationService){
-                const offlineUserIds = otherMembers.filter(id => !this.onlineUsers?.has(id));
+            // 🔥 3. PHÁT REALTIME TỪNG NGƯỜI KÈM ĐÚNG SEQ_ID CỦA HỌ (NẰM BÊN TRONG IF)
+            for (const recipientId of otherMembers) {
+                const recipientSeqId = userSeqMap[recipientId] || 0;
+
+                this.socketBroadcaster.broadcastToUser(recipientId, 'event:new', {
+                    seqId: recipientSeqId,
+                    eventType: 'new_message',
+                    roomId: saveMessage.roomId,
+                    messageId: saveMessage.id,
+                    data: {
+                        seqId: recipientSeqId,
+                        ...payloadData
+                    }
+                });
+            }
+
+            // 🟢 4. Gửi Push Notification cho những ai đang Offline
+            if (this.notificationService) {
+                const allOnlineUserIds = Array.from(this.onlineUsers ? this.allOnlineUserIds.values() : []);
+                const offlineUserIds = otherMembers.filter(id => !allOnlineUserIds.includes(id));
                 if (offlineUserIds.length > 0) {
-                    await this.notificationService?.sendNotification({
-                        userIds: offlineUserIds,
-                        title: "Tin nhắn mới",
-                        body: content,
-                        data: {
-                            roomId,
-                            messageId: saveMessage.id
-                        }
-                    })
+                    let senderName = "Người dùng";
+                    if (this.userRepository?.findById) {
+                        const senderUser = await this.userRepository.findById(senderId);
+                        if (senderUser?.fullName) senderName = senderUser.fullName;
+                    }
+
+                    for (const recipientId of offlineUserIds) {
+                        const recipientSeqId = userSeqMap[recipientId] || 0;
+
+                        await this.notificationService.sendNotification({
+                            userIds: [recipientId],
+                            data: {
+                                type: "NEW_MESSAGE",
+                                roomId: String(roomId),
+                                messageId: String(saveMessage.id),
+                                senderId: String(senderId),
+                                seqId: String(recipientSeqId), // 🔥 seqId riêng của người này
+                                senderName: senderName,         // 🔥 Tên thật từ DB
+                                preview: content ? String(content).slice(0, 100) : "[Hình ảnh/Tệp tin]",
+                                createdAt: new Date(saveMessage.createdAt).toISOString()
+                            }
+                        });
+                    }
                 }
             }
         }

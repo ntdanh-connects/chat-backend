@@ -9,6 +9,7 @@ class PostgresEventRepository extends IEventRepository{
     async createEventForRecipients({ recipientIds, eventType, roomId, messageId, payload }){
         if(!recipientIds || recipientIds.length == 0)return;
 
+        const userSeqMap = {};
         const client = await this.pool.connect();
 
         try{
@@ -23,12 +24,14 @@ class PostgresEventRepository extends IEventRepository{
                     RETURNING current_seq;
                 `, [recipientId]);
                 const nextSeqId = Number(seqRes.rows[0].current_seq);
+                userSeqMap[recipientId] = nextSeqId;
                 await client.query(`
                     INSERT INTO user_events (user_id, seq_id, event_type, room_id, message_id, payload)
                     VALUES ($1, $2, $3, $4, $5, $6);
                 `, [recipientId, nextSeqId, eventType, roomId, messageId, JSON.stringify(payload)]);
             }
             await client.query('COMMIT');
+            return userSeqMap;
         }catch(err){
             await client.query('ROLLBACK');
             console.error('❌ [PostgresEventRepository] Lỗi Transaction Fan-out:', err);

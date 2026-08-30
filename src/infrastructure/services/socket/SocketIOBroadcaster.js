@@ -10,6 +10,11 @@ class SocketIOBroadcaster extends SocketBroadcaster{
         this.io.to(roomId).emit(eventName,data);
     }
 
+    broadcastToUser(userId, eventName, data){
+        if(!userId) return;
+        this.io.to(`user:${userId}`).emit(eventName, data);
+    }
+
     broadcastToUsers(userIds, eventName, data){
         if(!userIds || userIds.length == 0) return;
 

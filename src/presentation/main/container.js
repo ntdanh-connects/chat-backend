@@ -44,7 +44,7 @@ function buildContainer(io) {
     const eventRepository = new PostgresEventRepository(pool);
 
     // 2. Use Cases
-    const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notificationService ,onlineUsers, roomRepository,eventRepository);
+    const sendMessageUseCase = new SendMessageUseCase(messageRepository, socketBroadcaster, notificationService ,onlineUsers, roomRepository,eventRepository, userRepository);
     const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
     const registerUseCase = new RegisterUseCase(authRepository);
     const loginUseCase = new LoginUseCase(authRepository);
