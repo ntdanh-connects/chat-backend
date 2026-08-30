@@ -40,9 +40,9 @@ class SendMessageUseCase {
 
             // 2. Fan-out vào user_events và nhận về map seqId của từng người
             let userSeqMap = {};
-            if (this.eventRepository && otherMembers.length > 0) {
+            if (this.eventRepository && memberIds.length > 0) {
                 userSeqMap = await this.eventRepository.createEventForRecipients({
-                    recipientIds: otherMembers,
+                    recipientIds: memberIds,
                     eventType: 'new_message',
                     roomId,
                     messageId: saveMessage.id,
