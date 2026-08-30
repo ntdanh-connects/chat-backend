@@ -68,32 +68,39 @@ class SendMessageUseCase {
 
             // 🟢 4. Gửi Push Notification cho những ai đang Offline
             if (this.notificationService) {
-                const allOnlineUserIds = Array.from(this.onlineUsers ? this.allOnlineUserIds.values() : []);
-                const offlineUserIds = otherMembers.filter(id => !allOnlineUserIds.includes(id));
-                if (offlineUserIds.length > 0) {
-                    let senderName = "Người dùng";
-                    if (this.userRepository?.findById) {
-                        const senderUser = await this.userRepository.findById(senderId);
-                        if (senderUser?.fullName) senderName = senderUser.fullName;
-                    }
+                try {
+                    const allOnlineUserIds = Array.from(this.onlineUsers ? this.onlineUsers.values() : []);
+                    const offlineUserIds = otherMembers.filter(id => !allOnlineUserIds.includes(id));
 
-                    for (const recipientId of offlineUserIds) {
-                        const recipientSeqId = userSeqMap[recipientId] || 0;
+                    if (offlineUserIds.length > 0) {
+                        let senderName = "Người dùng";
+                        if (this.userRepository?.findById) {
+                            try {
+                                const senderUser = await this.userRepository.findById(senderId);
+                                if (senderUser?.fullName) senderName = senderUser.fullName;
+                            } catch (_) {}
+                        }
 
-                        await this.notificationService.sendNotification({
-                            userIds: [recipientId],
-                            data: {
-                                type: "NEW_MESSAGE",
-                                roomId: String(roomId),
-                                messageId: String(saveMessage.id),
-                                senderId: String(senderId),
-                                seqId: String(recipientSeqId), // 🔥 seqId riêng của người này
-                                senderName: senderName,         // 🔥 Tên thật từ DB
-                                preview: content ? String(content).slice(0, 100) : "[Hình ảnh/Tệp tin]",
-                                createdAt: new Date(saveMessage.createdAt).toISOString()
-                            }
-                        });
+                        for (const recipientId of offlineUserIds) {
+                            const recipientSeqId = userSeqMap[recipientId] || 0;
+
+                            await this.notificationService.sendNotification({
+                                userIds: [recipientId],
+                                data: {
+                                    type: "NEW_MESSAGE",
+                                    roomId: String(roomId),
+                                    messageId: String(saveMessage.id),
+                                    senderId: String(senderId),
+                                    seqId: String(recipientSeqId),
+                                    senderName: senderName,
+                                    preview: content ? String(content).slice(0, 100) : "[Hình ảnh/Tệp tin]",
+                                    createdAt: new Date(saveMessage.createdAt).toISOString()
+                                }
+                            });
+                        }
                     }
+                } catch (pushErr) {
+                    console.error("⚠️ [PushNotification] Lỗi gửi push (không ảnh hưởng chat realtime):", pushErr);
                 }
             }
         }
