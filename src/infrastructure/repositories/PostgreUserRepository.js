@@ -7,6 +7,12 @@ class PostgreUserRepository extends UserRepository{
         this.pool = pool
     }
 
+    async findById(userId){
+        const query = `SELECT id, full_name, avatar_url, email FROM public.users WHERE id = $1`;
+        const result = await this.pool.query(query, [userId]);
+        return result.rows[0] ? this._toEntity(result.rows[0]) : null;
+    }
+
     async getSearchableUser({ userId, keyword = null, limit = 50}){
         const query = `
             SELECT u.id, u.organization_id, u.department_id, u.email, u.full_name,
