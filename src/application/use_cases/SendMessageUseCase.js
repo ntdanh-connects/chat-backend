@@ -98,6 +98,11 @@ class SendMessageUseCase {
                                 }
                             });
                         }
+                        this.socketBroadcaster.broadcastToUser(senderId, 'message:status_updated', {
+                            roomId: saveMessage.roomId,
+                            messageId: saveMessage.clientMessageId || saveMessage.id,
+                            status: 'delivered'
+                        });
                     }
                 } catch (pushErr) {
                     console.error("⚠️ [PushNotification] Lỗi gửi push (không ảnh hưởng chat realtime):", pushErr);
