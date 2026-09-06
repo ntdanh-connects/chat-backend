@@ -161,6 +161,17 @@ class MessageSocketController {
         }
     }
 
+    async handleMessageDeliveredBatch(socket, { roomId, messageIds, senderId }){
+        if(!Array.isArray(messageIds)|| messageIds.length === 0) return;
+
+        const target = senderId ? `user:${senderId}` : roomId;
+        this.io.to(target).emit("message:status_batch_updated", {
+            roomId,
+            messageIds,
+            status: "delivered"
+        });
+    }
+
 }
 
 module.exports = MessageSocketController;
